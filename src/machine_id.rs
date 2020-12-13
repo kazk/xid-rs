@@ -26,14 +26,14 @@ pub fn get() -> [u8; 3] {
     bytes
 }
 
-// OS dependent machine ids. Only linux was confirmed.
-
 // https://github.com/rs/xid/blob/efa678f304ab65d6d57eedcb086798381ae22206/hostid_linux.go
 // Not checking "/sys/class/dmi/id/product_uuid" because normal users can't read it.
 #[cfg(target_os = "linux")]
 fn machine_id() -> io::Result<String> {
+    // Get machine-id and remove the trailing new line.
     fs::read_to_string("/var/lib/dbus/machine-id")
         .or_else(|_| fs::read_to_string("/etc/machine-id"))
+        .map(|s| s.trim_end().to_string())
 }
 
 // https://github.com/rs/xid/blob/efa678f304ab65d6d57eedcb086798381ae22206/hostid_darwin.go
@@ -56,4 +56,31 @@ fn machine_id() -> io::Result<String> {
 fn machine_id() -> io::Result<String> {
     // Fallback to hostname or a random value
     Ok("".to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn test_linux() {
+        // machine-id has length 32
+        assert_eq!(machine_id().unwrap().len(), 32);
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn test_macos() {
+        // Ensure non empty string
+        assert!(machine_id().unwrap().len() > 0);
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn test_windows() {
+        // MachineGuid has length 36
+        // xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        assert_eq!(machine_id().unwrap().len(), 36);
+    }
 }
