@@ -1,6 +1,6 @@
 [package]
 name = "xid"
-version = "0.1.1"
+version = "1.0.0"
 license = "MIT"
 description = "Globally unique sortable id generator. A Rust port of https://github.com/rs/xid."
 keywords = ["id"]
