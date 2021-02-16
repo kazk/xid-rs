@@ -1,6 +1,8 @@
-use std::str::{self, FromStr};
-use std::string::ToString;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::{
+    str::{self, FromStr},
+    string::ToString,
+    time::{Duration, SystemTime, UNIX_EPOCH},
+};
 
 use thiserror::Error;
 
@@ -15,31 +17,36 @@ pub struct Id(pub [u8; RAW_LEN]);
 
 impl Id {
     /// The binary representation of the id.
+    #[must_use]
     pub fn as_bytes(&self) -> &[u8; RAW_LEN] {
         let Self(raw) = self;
         raw
     }
 
     /// Extract the 3-byte machine id.
+    #[must_use]
     pub fn machine(&self) -> [u8; 3] {
         let raw = self.as_bytes();
         [raw[4], raw[5], raw[6]]
     }
 
     /// Extract the process id.
+    #[must_use]
     pub fn pid(&self) -> u16 {
         let raw = self.as_bytes();
         u16::from_be_bytes([raw[7], raw[8]])
     }
 
     /// Extract the timestamp.
+    #[must_use]
     pub fn time(&self) -> SystemTime {
         let raw = self.as_bytes();
         let unix_ts = u32::from_be_bytes([raw[0], raw[1], raw[2], raw[3]]);
-        UNIX_EPOCH + Duration::from_secs(unix_ts as u64)
+        UNIX_EPOCH + Duration::from_secs(u64::from(unix_ts))
     }
 
     /// Extract the incrementing counter.
+    #[must_use]
     pub fn counter(&self) -> u32 {
         // Counter is stored as big-endian 3-byte value
         let raw = self.as_bytes();
@@ -52,7 +59,7 @@ impl ToString for Id {
     /// Returns the string representation of the id.
     fn to_string(&self) -> String {
         let Self(raw) = self;
-        let mut bs = [0u8; ENCODED_LEN];
+        let mut bs = [0_u8; ENCODED_LEN];
         bs[19] = ENC[((raw[11] << 4) & 31) as usize];
         bs[18] = ENC[((raw[11] >> 1) & 31) as usize];
         bs[17] = ENC[(((raw[11] >> 6) | (raw[10] << 2)) & 31) as usize];
@@ -97,12 +104,12 @@ impl FromStr for Id {
         if s.len() != 20 {
             return Err(ParseIdError::InvalidLength(s.len()));
         }
-        if let Some(c) = s.chars().find(|c| !is_valid_char(c)) {
+        if let Some(c) = s.chars().find(|&c| !matches!(c, '0'..='9' | 'a'..='v')) {
             return Err(ParseIdError::InvalidCharacter(c));
         }
 
         let bs = s.as_bytes();
-        let mut raw = [0u8; RAW_LEN];
+        let mut raw = [0_u8; RAW_LEN];
         raw[11] = DEC[bs[17] as usize] << 6 | DEC[bs[18] as usize] << 1 | DEC[bs[19] as usize] >> 4;
         raw[10] = DEC[bs[16] as usize] << 3 | DEC[bs[17] as usize] >> 2;
         raw[9] = DEC[bs[14] as usize] << 5 | DEC[bs[15] as usize];
@@ -119,16 +126,9 @@ impl FromStr for Id {
     }
 }
 
-fn is_valid_char(c: &char) -> bool {
-    match c {
-        '0'..='9' | 'a'..='v' => true,
-        _ => false,
-    }
-}
-
 #[rustfmt::skip]
 const fn gen_dec() -> [u8; 256] {
-    let mut dec = [0u8; 256];
+    let mut dec = [0_u8; 256];
     // Fill in ranges b'0'..=b'9' and b'a'..=b'v'.
     // dec[48..=57].copy_from_slice(&(0..=9).collect::<Vec<u8>>());
     dec[48] = 0; dec[49] = 1; dec[50] = 2; dec[51] = 3; dec[52] = 4;
@@ -198,10 +198,10 @@ mod tests {
                 raw: [
                     0x4d, 0x88, 0xe1, 0x5b, 0x60, 0xf4, 0x86, 0xe4, 0x28, 0x41, 0x2d, 0xc9,
                 ],
-                timestamp: 1300816219,
+                timestamp: 1_300_816_219,
                 machine_id: [0x60, 0xf4, 0x86],
                 pid: 0xe428,
-                counter: 4271561,
+                counter: 4_271_561,
             },
             IDParts {
                 raw: [

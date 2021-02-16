@@ -1,7 +1,10 @@
+#![deny(unsafe_code)]
+#![deny(clippy::all)]
+#![deny(clippy::pedantic)]
 //! Globally unique sortable id generator. A Rust port of <https://github.com/rs/xid>.
 //!
 //! The binary representation is compatible with the Mongo DB 12-byte
-//! [ObjectId][object-id]. The value consists of:
+//! [`ObjectId`][object-id]. The value consists of:
 //!
 //! - a 4-byte timestamp value in seconds since the Unix epoch
 //! - a 3-byte value based on the machine identifier
@@ -15,12 +18,8 @@
 //!
 //! ## Usage
 //!
-//! ```rust,ignore
-//! use xid;
-//!
-//! fn main() {
-//!     println!("{}", xid::new().to_string()); //=> bva9lbqn1bt68k8mj62g
-//! }
+//! ```
+//! println!("{}", xid::new().to_string()); //=> bva9lbqn1bt68k8mj62g
 //! ```
 //!
 //! [`xid`]:  https://github.com/rs/xid
@@ -33,6 +32,7 @@ mod pid;
 pub use id::{Id, ParseIdError};
 
 /// Generate a new globally unique id.
+#[must_use]
 pub fn new() -> Id {
     generator::get().new_id()
 }

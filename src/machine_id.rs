@@ -1,5 +1,3 @@
-use hostname;
-use md5;
 use rand::RngCore;
 #[cfg(any(target_os = "macos"))]
 use sysctl::{Sysctl, SysctlError};
@@ -13,7 +11,7 @@ pub fn get() -> [u8; 3] {
             .unwrap_or_default(),
     };
 
-    let mut bytes = [0u8; 3];
+    let mut bytes = [0_u8; 3];
     if id.is_empty() {
         // Fallback to random bytes
         rand::thread_rng().fill_bytes(&mut bytes);
