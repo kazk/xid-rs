@@ -38,7 +38,7 @@ impl Generator {
         let unix_ts = time
             .duration_since(UNIX_EPOCH)
             .expect("Clock may have gone backwards");
-        #[allow(clippy::clippy::cast_possible_truncation)]
+        #[allow(clippy::cast_possible_truncation)]
         self.generate(unix_ts.as_secs() as u32)
     }
 

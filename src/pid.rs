@@ -4,7 +4,7 @@ use crc32fast::Hasher;
 
 // 2 bytes of PID
 // https://github.com/rs/xid/blob/efa678f304ab65d6d57eedcb086798381ae22206/id.go#L159
-#[allow(clippy::clippy::cast_possible_truncation)]
+#[allow(clippy::cast_possible_truncation)]
 pub fn get() -> u16 {
     // https://github.com/rs/xid/blob/efa678f304ab65d6d57eedcb086798381ae22206/id.go#L105
     // > If /proc/self/cpuset exists and is not /, we can assume that we are in a
