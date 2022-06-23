@@ -33,6 +33,7 @@ impl Generator {
         self.with_time(&SystemTime::now())
     }
 
+    #[cfg_attr(target_os = "windows", allow(clippy::trivially_copy_pass_by_ref))]
     fn with_time(&self, time: &SystemTime) -> Id {
         // Panic if the time is before the epoch.
         let unix_ts = time
