@@ -1,3 +1,3 @@
 fn main() {
-    println!("{}", xid::new().to_string());
+    println!("{}", xid::new());
 }

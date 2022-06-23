@@ -19,7 +19,7 @@
 //! ## Usage
 //!
 //! ```
-//! println!("{}", xid::new().to_string()); //=> bva9lbqn1bt68k8mj62g
+//! println!("{}", xid::new()); //=> bva9lbqn1bt68k8mj62g
 //! ```
 //!
 //! [`xid`]:  https://github.com/rs/xid
