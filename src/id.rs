@@ -1,6 +1,6 @@
 use std::{
+    fmt,
     str::{self, FromStr},
-    string::ToString,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
@@ -54,10 +54,9 @@ impl Id {
     }
 }
 
-impl ToString for Id {
+impl fmt::Display for Id {
     // https://github.com/rs/xid/blob/efa678f304ab65d6d57eedcb086798381ae22206/id.go#L208
-    /// Returns the string representation of the id.
-    fn to_string(&self) -> String {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let Self(raw) = self;
         let mut bs = [0_u8; ENCODED_LEN];
         bs[19] = ENC[((raw[11] << 4) & 31) as usize];
@@ -80,7 +79,7 @@ impl ToString for Id {
         bs[2] = ENC[((raw[1] >> 1) & 31) as usize];
         bs[1] = ENC[(((raw[1] >> 6) | (raw[0] << 2)) & 31) as usize];
         bs[0] = ENC[(raw[0] >> 3) as usize];
-        str::from_utf8(&bs).unwrap().to_string()
+        write!(f, "{}", str::from_utf8(&bs).expect("valid utf8"))
     }
 }
 

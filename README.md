@@ -22,7 +22,7 @@ See the original [`xid`] project for more details.
 ## Usage
 
 ```rust
-println!("{}", xid::new().to_string()); //=> bva9lbqn1bt68k8mj62g
+println!("{}", xid::new()); //=> bva9lbqn1bt68k8mj62g
 ```
 
 ## Examples
