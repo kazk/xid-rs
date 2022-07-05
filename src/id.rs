@@ -12,7 +12,7 @@ const ENC: &[u8] = "0123456789abcdefghijklmnopqrstuv".as_bytes();
 const DEC: [u8; 256] = gen_dec();
 
 /// An ID.
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub struct Id(pub [u8; RAW_LEN]);
 
 impl Id {
@@ -80,6 +80,12 @@ impl fmt::Display for Id {
         bs[1] = ENC[(((raw[1] >> 6) | (raw[0] << 2)) & 31) as usize];
         bs[0] = ENC[(raw[0] >> 3) as usize];
         write!(f, "{}", str::from_utf8(&bs).expect("valid utf8"))
+    }
+}
+
+impl std::fmt::Debug for Id {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("Id").field(&self.to_string()).finish()
     }
 }
 
