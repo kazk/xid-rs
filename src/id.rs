@@ -90,7 +90,7 @@ impl std::fmt::Debug for Id {
 }
 
 /// An error which can be returned when parsing an id.
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum ParseIdError {
     /// Returned when the id had length other than 20.
     #[error("invalid length {0}")]
