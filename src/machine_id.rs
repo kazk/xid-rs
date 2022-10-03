@@ -6,9 +6,7 @@ use sysctl::{Sysctl, SysctlError};
 pub fn get() -> [u8; 3] {
     let id = match machine_id().unwrap_or_default() {
         x if !x.is_empty() => x,
-        _ => hostname::get()
-            .map(|s| s.into_string().unwrap_or_default())
-            .unwrap_or_default(),
+        _ => hostname_fallback(),
     };
 
     let mut bytes = [0_u8; 3];
@@ -19,6 +17,19 @@ pub fn get() -> [u8; 3] {
         bytes.copy_from_slice(&md5::compute(id)[0..3]);
     }
     bytes
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn hostname_fallback() -> String {
+    hostname::get()
+        .map(|s| s.into_string().unwrap_or_default())
+        .unwrap_or_default()
+}
+
+// `hostname` crate doesn't support wasm, so use an empty string to generate random bytes.
+#[cfg(target_arch = "wasm32")]
+fn hostname_fallback() -> String {
+    "".to_owned()
 }
 
 // https://github.com/rs/xid/blob/efa678f304ab65d6d57eedcb086798381ae22206/hostid_linux.go
