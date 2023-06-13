@@ -115,6 +115,11 @@ impl FromStr for Id {
         let bs = s.as_bytes();
         let mut raw = [0_u8; RAW_LEN];
         raw[11] = DEC[bs[17] as usize] << 6 | DEC[bs[18] as usize] << 1 | DEC[bs[19] as usize] >> 4;
+        // check the last byte
+        if ENC[((raw[11] << 4) & 31) as usize] != bs[19] {
+            return Err(ParseIdError::InvalidCharacter(bs[19] as char));
+        }
+
         raw[10] = DEC[bs[16] as usize] << 3 | DEC[bs[17] as usize] >> 2;
         raw[9] = DEC[bs[14] as usize] << 5 | DEC[bs[15] as usize];
         raw[8] = DEC[bs[12] as usize] << 7 | DEC[bs[13] as usize] << 2 | DEC[bs[14] as usize] >> 3;
@@ -184,6 +189,13 @@ mod tests {
             Id::from_str("9z4e2mr0ui3e8a215n4g"),
             Err(ParseIdError::InvalidCharacter('z'))
         );
+
+        assert_eq!(
+            Id::from_str("00000000000000jarvis"),
+            Err(ParseIdError::InvalidCharacter('s'))
+        );
+
+        assert!(Id::from_str("00000000000000jarvig").is_ok());
     }
 
     // https://github.com/rs/xid/blob/efa678f304ab65d6d57eedcb086798381ae22206/id_test.go#L45
