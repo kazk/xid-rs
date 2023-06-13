@@ -1,5 +1,4 @@
 use std::{
-    fmt,
     str::{self, FromStr},
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
@@ -12,7 +11,7 @@ const ENC: &[u8] = "0123456789abcdefghijklmnopqrstuv".as_bytes();
 const DEC: [u8; 256] = gen_dec();
 
 /// An ID.
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash, Default)]
 pub struct Id(pub [u8; RAW_LEN]);
 
 impl Id {
@@ -54,9 +53,9 @@ impl Id {
     }
 }
 
-impl fmt::Display for Id {
+impl std::fmt::Display for Id {
     // https://github.com/rs/xid/blob/efa678f304ab65d6d57eedcb086798381ae22206/id.go#L208
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let Self(raw) = self;
         let mut bs = [0_u8; ENCODED_LEN];
         bs[19] = ENC[((raw[11] << 4) & 31) as usize];
@@ -238,5 +237,19 @@ mod tests {
             assert_eq!(id.pid(), t.pid);
             assert_eq!(id.counter(), t.counter);
         }
+    }
+
+    #[test]
+    fn test_default() {
+        let id: Id = Default::default();
+        assert_eq!("00000000000000000000", id.to_string().as_str());
+        assert_eq!(Id::from_str("00000000000000000000").unwrap(), id);
+        assert_eq!(
+            id.time().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            0u64,
+        );
+        assert_eq!(id.machine(), [0u8; 3]);
+        assert_eq!(id.pid(), 0u16);
+        assert_eq!(id.counter(), 0u32);
     }
 }
