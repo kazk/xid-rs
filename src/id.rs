@@ -1,5 +1,4 @@
 use std::{
-    fmt,
     str::{self, FromStr},
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
@@ -10,12 +9,24 @@ pub(crate) const RAW_LEN: usize = 12;
 const ENCODED_LEN: usize = 20;
 const ENC: &[u8] = "0123456789abcdefghijklmnopqrstuv".as_bytes();
 const DEC: [u8; 256] = gen_dec();
+pub(crate) const ZERO: Id = Id([0u8; RAW_LEN]);
 
 /// An ID.
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash, Default)]
 pub struct Id(pub [u8; RAW_LEN]);
 
 impl Id {
+    /// Create an Id from a bytes slice.
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, ParseIdError> {
+        if bytes.len() != RAW_LEN {
+            return Err(ParseIdError::InvalidLength(bytes.len()));
+        }
+
+        let mut id = [0u8; RAW_LEN];
+        id.copy_from_slice(bytes);
+        Ok(Id(id))
+    }
+
     /// The binary representation of the id.
     #[must_use]
     pub fn as_bytes(&self) -> &[u8; RAW_LEN] {
@@ -52,11 +63,16 @@ impl Id {
         let raw = self.as_bytes();
         u32::from_be_bytes([0, raw[9], raw[10], raw[11]])
     }
+
+    /// Returns true if this is a "zero" ID
+    pub fn is_zero(&self) -> bool {
+        self.0 == ZERO.0
+    }
 }
 
-impl fmt::Display for Id {
+impl std::fmt::Display for Id {
     // https://github.com/rs/xid/blob/efa678f304ab65d6d57eedcb086798381ae22206/id.go#L208
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let Self(raw) = self;
         let mut bs = [0_u8; ENCODED_LEN];
         bs[19] = ENC[((raw[11] << 4) & 31) as usize];
@@ -116,6 +132,11 @@ impl FromStr for Id {
         let bs = s.as_bytes();
         let mut raw = [0_u8; RAW_LEN];
         raw[11] = DEC[bs[17] as usize] << 6 | DEC[bs[18] as usize] << 1 | DEC[bs[19] as usize] >> 4;
+        // check the last byte
+        if ENC[((raw[11] << 4) & 31) as usize] != bs[19] {
+            return Err(ParseIdError::InvalidCharacter(bs[19] as char));
+        }
+
         raw[10] = DEC[bs[16] as usize] << 3 | DEC[bs[17] as usize] >> 2;
         raw[9] = DEC[bs[14] as usize] << 5 | DEC[bs[15] as usize];
         raw[8] = DEC[bs[12] as usize] << 7 | DEC[bs[13] as usize] << 2 | DEC[bs[14] as usize] >> 3;
@@ -180,11 +201,27 @@ mod tests {
     }
 
     #[test]
+    fn test_from_bytes_invalid_length() {
+        assert_eq!(
+            Id::from_bytes([1u8; 19].as_slice()),
+            Err(ParseIdError::InvalidLength(19))
+        );
+    }
+
+    #[test]
     fn test_from_str_invalid_char() {
         assert_eq!(
             Id::from_str("9z4e2mr0ui3e8a215n4g"),
             Err(ParseIdError::InvalidCharacter('z'))
         );
+
+        assert_eq!(
+            Id::from_str("00000000000000jarvis"),
+            Err(ParseIdError::InvalidCharacter('s'))
+        );
+
+        assert!(Id::from_str("00000000000000jarvig").is_ok());
+        assert!(!Id::from_str("00000000000000jarvig").unwrap().is_zero());
     }
 
     // https://github.com/rs/xid/blob/efa678f304ab65d6d57eedcb086798381ae22206/id_test.go#L45
@@ -237,6 +274,25 @@ mod tests {
             assert_eq!(id.machine(), t.machine_id);
             assert_eq!(id.pid(), t.pid);
             assert_eq!(id.counter(), t.counter);
+
+            let rt = Id::from_bytes(id.as_bytes());
+            assert!(rt.is_ok());
+            assert_eq!(rt.unwrap(), id);
         }
+    }
+
+    #[test]
+    fn test_default() {
+        let id: Id = Default::default();
+        assert!(id.is_zero());
+        assert_eq!("00000000000000000000", id.to_string().as_str());
+        assert_eq!(Id::from_str("00000000000000000000").unwrap(), id);
+        assert_eq!(
+            id.time().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            0u64,
+        );
+        assert_eq!(id.machine(), [0u8; 3]);
+        assert_eq!(id.pid(), 0u16);
+        assert_eq!(id.counter(), 0u32);
     }
 }
