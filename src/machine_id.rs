@@ -1,5 +1,5 @@
 use rand::RngCore;
-#[cfg(any(target_os = "macos"))]
+#[cfg(target_os = "macos")]
 use sysctl::{Sysctl, SysctlError};
 
 // https://github.com/rs/xid/blob/efa678f304ab65d6d57eedcb086798381ae22206/id.go#L117
