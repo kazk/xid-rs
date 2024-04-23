@@ -17,6 +17,10 @@ pub struct Id(pub [u8; RAW_LEN]);
 
 impl Id {
     /// Create an Id from a bytes slice.
+    ///
+    /// # Errors
+    ///
+    /// Will return `Err` if the length of `bytes` is invalid.
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, ParseIdError> {
         if bytes.len() != RAW_LEN {
             return Err(ParseIdError::InvalidLength(bytes.len()));
@@ -65,6 +69,7 @@ impl Id {
     }
 
     /// Returns true if this is a "zero" ID
+    #[must_use]
     pub fn is_zero(&self) -> bool {
         self.0 == ZERO.0
     }
