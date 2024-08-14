@@ -54,10 +54,11 @@ fn machine_id() -> Result<String, SysctlError> {
 // https://github.com/rs/xid/blob/efa678f304ab65d6d57eedcb086798381ae22206/hostid_windows.go
 #[cfg(target_os = "windows")]
 fn machine_id() -> std::io::Result<String> {
-    let hklm = winreg::RegKey::predef(winreg::enums::HKEY_LOCAL_MACHINE);
-    let guid: String = hklm
-        .open_subkey("SOFTWARE\\Microsoft\\Cryptography")?
-        .get_value("MachineGuid")?;
+    use windows_registry::*;
+
+    let guid = LOCAL_MACHINE
+        .open("SOFTWARE\\Microsoft\\Cryptography")?
+        .get_string("MachineGuid")?;
     Ok(guid)
 }
 
