@@ -1,5 +1,6 @@
 use std::{
-    sync::atomic::{AtomicU32, Ordering},
+    process,
+    sync::atomic::{AtomicU16, AtomicU32, Ordering},
     time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -15,7 +16,8 @@ use crate::{
 pub struct Generator {
     counter: AtomicU32,
     machine_id: [u8; 3],
-    pid: [u8; 2],
+    pid: AtomicU16,
+    process_id: AtomicU32,
 }
 
 pub fn get() -> &'static Generator {
@@ -24,7 +26,8 @@ pub fn get() -> &'static Generator {
     INSTANCE.get_or_init(|| Generator {
         counter: AtomicU32::new(init_random()),
         machine_id: machine_id::get(),
-        pid: pid::get().to_be_bytes(),
+        pid: AtomicU16::new(pid::get()),
+        process_id: AtomicU32::new(process::id()),
     })
 }
 
@@ -44,6 +47,13 @@ impl Generator {
     }
 
     fn generate(&self, unix_ts: u32) -> Id {
+        let process_id = process::id();
+        if self.process_id.load(Ordering::SeqCst) != process_id {
+            self.pid.store(pid::get(), Ordering::SeqCst);
+            self.counter.store(init_random(), Ordering::SeqCst);
+            self.process_id.store(process_id, Ordering::SeqCst);
+        }
+
         let counter = self.counter.fetch_add(1, Ordering::SeqCst);
 
         let mut raw = [0_u8; RAW_LEN];
@@ -52,7 +62,7 @@ impl Generator {
         // 3 bytes of Machine ID
         raw[4..=6].copy_from_slice(&self.machine_id);
         // 2 bytes of PID
-        raw[7..=8].copy_from_slice(&self.pid);
+        raw[7..=8].copy_from_slice(&self.pid.load(Ordering::SeqCst).to_be_bytes());
         // 3 bytes of increment counter (big endian)
         raw[9..].copy_from_slice(&counter.to_be_bytes()[1..]);
 

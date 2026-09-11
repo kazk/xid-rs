@@ -30,6 +30,9 @@ winreg = "^0.8"
 [dev-dependencies]
 criterion = "0.3"
 
+[target.'cfg(unix)'.dev-dependencies]
+libc = "^0.2"
+
 
 [[bench]]
 name = "xid_new"
